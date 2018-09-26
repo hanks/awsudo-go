@@ -64,6 +64,6 @@ to run aws command.
 
 **Waiting for your pull request**
 
-## Lisence
+## Licence
 
-MIT Lisence
+MIT Licence
