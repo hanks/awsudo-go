@@ -1,40 +1,21 @@
 package utils
 
 import (
-	"bufio"
-	"fmt"
-	"io"
+	"log"
+	"os"
 	"os/exec"
+	"syscall"
 )
 
+// ExecCommand is to execute shell command in golang
 func ExecCommand(cmds []string) error {
 	cmdName := cmds[0]
-	cmdArgs := cmds[1:]
-	cmd := exec.Command(cmdName, cmdArgs...)
-
-	stdout, err := cmd.StdoutPipe()
+	binPath, err := exec.LookPath(cmdName)
 	if err != nil {
-		return err
+		log.Fatalf("%s is not found", cmdName)
 	}
-	defer stdout.Close()
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-
-	// output command log in real-time style
-	buf := make([]byte, 1024)
-	for {
-		_, err := stdout.Read(buf)
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return err
-		}
-		r := bufio.NewReader(stdout)
-		line, _, _ := r.ReadLine()
-		fmt.Println(string(line))
-	}
-
-	return nil
+	cmds[0] = binPath
+	// use syscall.Exec to replace process with new one
+	err = syscall.Exec(binPath, cmds, os.Environ())
+	return err
 }

@@ -15,7 +15,7 @@ import (
 	"github.com/urfave/cli"
 )
 
-var ConfigFlag = cli.StringFlag{
+var configFlag = cli.StringFlag{
 	Name:  "config, c",
 	Value: "",
 	Usage: "Load configuration from `FILE`",
@@ -43,25 +43,25 @@ func main() {
 	app := cli.NewApp()
 
 	app.Name = "awsudo"
-	app.UsageText = `	awsudo configure [--config|-c awsudo.toml]  # create awsudo config to the default path
-	awsudo agent [--config|-c awsudo.toml]  # start agent server to store credentials with expiration
-	awsudo shutdown  # shutdown agent server in background
+	app.UsageText = `	awsudo configure [--config|-c awsudo.toml]                   # create awsudo config to the default path
+	awsudo start-agent [--config|-c awsudo.toml]                 # start agent server to store credentials with expiration
+	awsudo stop-agent                                            # stop agent server in background
 	awsudo [--config|-c awsudo.toml] awsRoleName [aws commands]  # run aws commands with awsudo
 	`
 	app.Usage = "Automated AWS API access using a SAML compliant identity provider"
 	app.Version = v.Version
 
 	app.Flags = []cli.Flag{
-		ConfigFlag,
+		configFlag,
 	}
 
 	app.Commands = []cli.Command{
 		{
-			Name:      "agent",
+			Name:      "start-agent",
 			Usage:     "Start agent server to store credentials with expiration",
-			UsageText: "awsudo agent [--config|-c awsudo.toml]",
+			UsageText: "awsudo start-agent [--config|-c awsudo.toml]",
 			Flags: []cli.Flag{
-				ConfigFlag,
+				configFlag,
 			},
 			Action: func(c *cli.Context) error {
 				confPath := c.String("config")
@@ -75,7 +75,7 @@ func main() {
 			Usage:     "Set config to default path or specified path from input",
 			UsageText: "awsudo configure [--config|-c awsudo.toml]",
 			Flags: []cli.Flag{
-				ConfigFlag,
+				configFlag,
 			},
 			Action: func(c *cli.Context) error {
 				confPath := c.String("config")
@@ -85,15 +85,15 @@ func main() {
 			},
 		},
 		{
-			Name:      "shutdown",
-			Usage:     "Kill agent server in backgound, and do some cleanup tasks",
-			UsageText: "awsudo shutdown [--config|-c awsudo.toml]",
+			Name:      "stop-agent",
+			Usage:     "Stop agent server in background, and do some cleanup tasks",
+			UsageText: "awsudo stop-agent [--config|-c awsudo.toml]",
 			Flags: []cli.Flag{
-				ConfigFlag,
+				configFlag,
 			},
 			Action: func(c *cli.Context) error {
 				confPath := c.String("config")
-				cmd.Shutdown(confPath)
+				cmd.Stop(confPath)
 
 				return nil
 			},

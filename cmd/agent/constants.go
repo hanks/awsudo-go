@@ -1,11 +1,12 @@
 package agent
 
+// Const for simple protocols use in agent communications
 const (
-	BUFF_SIZE      = 1024
-	DELIMITER      = ":"
-	GET_CREDS_FLAG = "GetCreds"
-	SET_CREDS_FLAG = "SetCreds"
-	NO_CREDS_FLAG  = "NoCreds"
-	ENCODE_ERROR   = "Error by encode"
-	DECODE_ERROR   = "Error by decode"
+	BuffSize     = 1024
+	DELIMITER    = ":"
+	GetCredsFlag = "GetCreds"
+	SetCredsFlag = "SetCreds"
+	NoCredsFlag  = "NoCreds"
+	EncodeError  = "Error by encode"
+	DecodeError  = "Error by decode"
 )

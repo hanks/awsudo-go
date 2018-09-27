@@ -1,3 +1,4 @@
 package version
 
-var Version string = "1.0.0"
+// Version is the version number of this project
+var Version = "1.0.0"

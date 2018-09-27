@@ -19,7 +19,8 @@ type payload struct {
 	Options map[string]bool `json:"options"`
 }
 
-type okta struct {
+// Okta is a struct to define okta type to perform okta api call
+type Okta struct {
 	User        string
 	Pass        string
 	AuthAPI     string
@@ -27,8 +28,9 @@ type okta struct {
 	C           *http.Client
 }
 
-func NewOkta(user string, pass string, api string, idpLoginURL string, c *http.Client) *okta {
-	return &okta{
+// NewOkta is to create an new okta instance
+func NewOkta(user string, pass string, api string, idpLoginURL string, c *http.Client) *Okta {
+	return &Okta{
 		User:        user,
 		Pass:        pass,
 		AuthAPI:     api,
@@ -37,7 +39,8 @@ func NewOkta(user string, pass string, api string, idpLoginURL string, c *http.C
 	}
 }
 
-func (o *okta) GetSessionToken() (string, error) {
+// GetSessionToken is to call auth api to get session token
+func (o *Okta) GetSessionToken() (string, error) {
 	p := &payload{
 		User: o.User,
 		Pass: o.Pass,
@@ -73,7 +76,8 @@ func (o *okta) GetSessionToken() (string, error) {
 	return sessionToken, nil
 }
 
-func (o *okta) GetSAMLAssertion(sessionToken string) (string, error) {
+// GetSAMLAssertion is to call login url get SAMLAssertion from session token string
+func (o *Okta) GetSAMLAssertion(sessionToken string) (string, error) {
 	formData := url.Values{
 		"onetimetoken": {sessionToken},
 	}

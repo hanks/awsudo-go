@@ -23,6 +23,7 @@ func getConfig(path string) *parser.Config {
 	return conf
 }
 
+// RunAgentServer is a wrapper to run awsudo agent server process in background
 func RunAgentServer(path string) {
 	conf := getConfig(path)
 	log.Printf("Start agent server to handle new request, and will be expired after %d seconds", conf.Agent.Expiration)
@@ -30,13 +31,14 @@ func RunAgentServer(path string) {
 	server.run()
 }
 
+// RunAgentClient is a wrapper to run awsudo agent client
 func RunAgentClient(path string, roleName string) {
 	// create subprocess to run agent server background
 	ex, err := os.Executable()
 	if err != nil {
 		log.Fatalf("Can not find current executable binary.")
 	}
-	serverCmd := exec.Command(ex, "agent", "-c", path)
+	serverCmd := exec.Command(ex, "start-agent", "-c", path)
 	err = serverCmd.Start()
 	if err != nil {
 		log.Fatalf("Start server process background err. Please check %v", err)

@@ -12,6 +12,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+// AskUserInput is to ask user to input account info for aws role
 func AskUserInput() (string, string) {
 	var name, pass string
 
@@ -42,6 +43,7 @@ func AskUserInput() (string, string) {
 
 var scanner = bufio.NewScanner(os.Stdin)
 
+// InputString is to accept user input to a string var
 func InputString(s *string, name string) {
 	v := *s
 	if v == "" {
@@ -54,6 +56,7 @@ func InputString(s *string, name string) {
 	}
 }
 
+// InputInt64 is to accept user input to a int64 var
 func InputInt64(v *int64, name string) {
 	i := *v
 	if i == 0 {

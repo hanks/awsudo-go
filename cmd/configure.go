@@ -10,6 +10,8 @@ import (
 	"github.com/hanks/awsudo-go/utils"
 )
 
+// RunConfigure command is to config awsudo with 'aws configure style',
+// And will save configs into ~/.awsudo.conf
 func RunConfigure(path string) {
 	if path == "" {
 		path = c.DefaultConfPath

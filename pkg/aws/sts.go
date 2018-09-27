@@ -6,10 +6,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
+// STS is a wrapper struct for sts.STS type
 type STS struct {
 	C *sts.STS
 }
 
+// NewSTS is to create a nwe sts instance to perform aws sts api
 func NewSTS() (*STS, error) {
 	cfg, err := external.LoadDefaultAWSConfig()
 	if err != nil {
@@ -20,6 +22,7 @@ func NewSTS() (*STS, error) {
 	}, nil
 }
 
+// GetCredentials is to call assume api to get aws secret tokens for futher commands
 func (s *STS) GetCredentials(roleARN string, principalArn string, samlAssertion string, duration int64) (*sts.Credentials, error) {
 	input := &sts.AssumeRoleWithSAMLInput{
 		DurationSeconds: aws.Int64(duration),

@@ -4,14 +4,16 @@ NAME = awsudo
 WORKSPACE = /go/src/github.com/hanks/awsudo-go
 DEV_IMAGE = hanks/awsudo-go-dev:1.0.0
 OS = $(shell uname -s | tr '[:upper:]' '[:lower:]')
+CMD ?= help
+AWSUDO_DEBUG ?= false
 
 .PHONY: build clean dev debug install push run test uninstall
 
 default: test
 
 build: test clean
-	CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -o ./dist/bin/$(NAME)_linux_amd64_$(VERSION) main.go
-	CGO_ENABLED=0 GOARCH=amd64 GOOS=darwin go build -o ./dist/bin/$(NAME)_darwin_amd64_$(VERSION) main.go
+	docker run -it --rm -v $(CUR_DIR):$(WORKSPACE) -e "CGO_ENABLED=0" -e "GOARCH=amd64" -e "GOOS=linux" $(DEV_IMAGE) go build -o ./dist/bin/tfvargen_linux_amd64_$(VERSION) main.go
+	docker run -it --rm -v $(CUR_DIR):$(WORKSPACE) -e "CGO_ENABLED=0" -e "GOARCH=amd64" -e "GOOS=darwin" $(DEV_IMAGE) go build -o ./dist/bin/tfvargen_darwin_amd64_$(VERSION) main.go
 
 clean:
 	rm -rf ./dist
@@ -29,12 +31,12 @@ push:
 	docker push $(DEV_IMAGE)
 
 run:
-	docker run -it --rm -v $(CUR_DIR):$(WORKSPACE) $(DEV_IMAGE) go run main.go help
+	docker run -it --rm -e AWSUDO_DEBUG=$(AWSUDO_DEBUG) -v $(CUR_DIR):$(WORKSPACE) $(DEV_IMAGE) go run main.go $(CMD)
 
 test:
-	echo "unit test..."
-	docker run -it --rm -v $(CUR_DIR):$(WORKSPACE) $(DEV_IMAGE) go vet ./...
-	#docker run -it --rm -v $(CUR_DIR):$(WORKSPACE) $(DEV_IMAGE) golint -set_exit_status $(go list ./...)
+	docker run -it --rm -v $(CUR_DIR):$(WORKSPACE) $(DEV_IMAGE) sh -c 'go vet $$(go list ./...)'
+	docker run -it --rm -v $(CUR_DIR):$(WORKSPACE) $(DEV_IMAGE) sh -c 'golint -set_exit_status $$(go list ./...)'
+	docker run -it --rm -v $(CUR_DIR):$(WORKSPACE) $(DEV_IMAGE) sh -c 'go test -v -covermode=count -coverprofile=coverage.out $$(go list ./... | grep -v /configs | grep -v /version)'
 
 uninstall:
 	rm /usr/local/bin/$(NAME)

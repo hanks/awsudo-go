@@ -12,11 +12,11 @@ import (
 )
 
 type provider struct {
-	IDP                string `toml:"idp"`
-	IDP_LOGIN_URL      string `toml:"idp_login_url"`
-	SAML_PROVIDER_NAME string `toml:"saml_provide_name"`
-	AUTH_API           string `toml:"auth_api"`
-	SESSION_DURATION   int64  `toml:"session_duration"`
+	IDP              string `toml:"idp"`
+	IdpLoginURL      string `toml:"idp_login_url"`
+	SamlProviderName string `toml:"saml_provide_name"`
+	AuthAPI          string `toml:"auth_api"`
+	SessionDuration  int64  `toml:"session_duration"`
 }
 
 type role struct {
@@ -28,12 +28,14 @@ type agent struct {
 	Expiration int64 `toml:"expiration"`
 }
 
+// Config is the struct for awsudo config file
 type Config struct {
 	Provider provider `toml:"provider"`
 	Agent    agent    `toml:"agent"`
 	Roles    []role   `toml:"roles"`
 }
 
+// LoadConfig is to create Config instance by loading from config file
 func LoadConfig(path string) (*Config, error) {
 	var conf Config
 	_, err := toml.DecodeFile(path, &conf)
@@ -46,6 +48,7 @@ func LoadConfig(path string) (*Config, error) {
 	return &conf, nil
 }
 
+// WriteConfig is to write config struct data to config file
 func WriteConfig(path string, config *Config) {
 	f, err := os.Create(path)
 	if err != nil {
@@ -62,15 +65,17 @@ func WriteConfig(path string, config *Config) {
 	}
 }
 
+// Validate is to do easy validation for config items
 func (c *Config) Validate() {
-	if c.Agent.Expiration > c.Provider.SESSION_DURATION {
+	if c.Agent.Expiration > c.Provider.SessionDuration {
 		log.Fatalf("Agent expiration (%d) should be smaller than session duration (%d), please check config file",
 			c.Agent.Expiration,
-			c.Provider.SESSION_DURATION,
+			c.Provider.SessionDuration,
 		)
 	}
 }
 
+// GetARN is to get arn from role name
 func (c *Config) GetARN(name string) (bool, string) {
 	existed := false
 	arn := ""
@@ -87,6 +92,7 @@ func (c *Config) GetARN(name string) (bool, string) {
 	return existed, arn
 }
 
+// GetPrincipalArn is to get PrincipalArn from arn string
 func (c *Config) GetPrincipalArn(arn string) string {
 	r := regexp.MustCompile(`.*::(?P<AccountID>\d+):.*`)
 	groups := r.FindStringSubmatch(arn)
@@ -94,16 +100,17 @@ func (c *Config) GetPrincipalArn(arn string) string {
 		return ""
 	}
 
-	return fmt.Sprintf("arn:aws:iam::%s:saml-provider/%s", groups[1], c.Provider.SAML_PROVIDER_NAME)
+	return fmt.Sprintf("arn:aws:iam::%s:saml-provider/%s", groups[1], c.Provider.SamlProviderName)
 }
 
+// InputConfig is to accept user intput to set each items for config
 func (c *Config) InputConfig() {
 	utils.InputString(&c.Provider.IDP, "IDP")
-	utils.InputString(&c.Provider.IDP_LOGIN_URL, "IDP Login URL")
-	utils.InputString(&c.Provider.SAML_PROVIDER_NAME, "SAML Provider Name")
-	utils.InputString(&c.Provider.AUTH_API, "Auth API")
+	utils.InputString(&c.Provider.IdpLoginURL, "IDP Login URL")
+	utils.InputString(&c.Provider.SamlProviderName, "SAML Provider Name")
+	utils.InputString(&c.Provider.AuthAPI, "Auth API")
 
-	utils.InputInt64(&c.Provider.SESSION_DURATION, "AWS Session Duration")
+	utils.InputInt64(&c.Provider.SessionDuration, "AWS Session Duration")
 	utils.InputInt64(&c.Agent.Expiration, "Agent Expiration")
 
 	c.Validate()

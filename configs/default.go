@@ -16,17 +16,33 @@ func getDebugFromEnv() bool {
 	return debug
 }
 
-var DEBUG bool = getDebugFromEnv()
+// DEBUG is to print verbose log info with line number
+var DEBUG = getDebugFromEnv()
 
-var DefaultConfPath string = "~/.awsudo/config.toml"
+// DefaultConfPath is the path of awsudo config
+var DefaultConfPath = "~/.awsudo/config.toml"
+
+// ReqTimeout is the duration of request api timeout
 var ReqTimeout time.Duration = 60
-var SocketFile string = "/var/tmp/awsudo.sock"
+
+// SocketFile is the path of awsudo server socket file
+var SocketFile = "/var/tmp/awsudo.sock"
+
+// RetryInterval is the back-off array used in request retry
 var RetryInterval = []int{1, 3, 5}
-var DefaultLogPath string = "/tmp/awsudo.log"
-var AppName string = "awsudo"
+
+// DefaultLogPath is the log file path of awsudo
+var DefaultLogPath = "/tmp/awsudo.log"
+
+// AppName is the name of this app
+var AppName = "awsudo"
 
 /*
  * Config File Settings
  */
+
+// DefaultSessionDuration is session duration of aws assume role seesion
 var DefaultSessionDuration int64 = 3600
+
+// DefaultAgentExpiration is expiration duration of awsudo agent server
 var DefaultAgentExpiration int64 = 3600
