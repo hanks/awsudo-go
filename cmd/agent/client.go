@@ -32,7 +32,7 @@ func (c *client) handleClientFunc(conn net.Conn) {
 		log.Fatalf("Client error, can not send %s successfully, %v", req, err)
 	}
 
-	resp := make([]byte, BUFF_SIZE)
+	resp := make([]byte, BuffSize)
 	length, err := conn.Read(resp)
 	if err != nil {
 		log.Fatalf("Server error, read response error, %v", err)
@@ -41,11 +41,11 @@ func (c *client) handleClientFunc(conn net.Conn) {
 	resp = resp[:length]
 	credentials := new(creds.Creds)
 
-	if string(resp) == NO_CREDS_FLAG {
+	if string(resp) == NoCredsFlag {
 		user, pass := utils.AskUserInput()
 		credentials = creds.FetchCreds(user, pass, c.RoleName, c.Config)
 		encoded, _ := credentials.Encode()
-		req = fmt.Sprintf("%s%s%s", SET_CREDS_FLAG, DELIMITER, encoded)
+		req = fmt.Sprintf("%s%s%s", SetCredsFlag, DELIMITER, encoded)
 
 		_, err = conn.Write([]byte(req))
 		if err != nil {

@@ -1,2 +1,4 @@
 proto.py
 .vscode/
+coverage.out
+coverage.html

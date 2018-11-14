@@ -42,7 +42,7 @@ func (s *server) handleServerFunc(conn net.Conn) {
 	defer conn.Close()
 
 	for {
-		buf := make([]byte, BUFF_SIZE)
+		buf := make([]byte, BuffSize)
 		length, err := conn.Read(buf)
 		if err != nil {
 			if err != io.EOF {
@@ -57,27 +57,27 @@ func (s *server) handleServerFunc(conn net.Conn) {
 		buf = buf[:length]
 
 		msgStr := string(buf)
-		if msgStr == GET_CREDS_FLAG {
+		if msgStr == GetCredsFlag {
 			if s.credentials.AccessKeyID == "" {
 				log.Println("No stored credentials yet, please set it firstly.")
-				conn.Write([]byte(NO_CREDS_FLAG))
+				conn.Write([]byte(NoCredsFlag))
 			} else {
 				log.Println("Credential is already existed, send to client directly.")
 				data, err := s.credentials.Encode()
 				if err != nil {
-					conn.Write([]byte(ENCODE_ERROR))
+					conn.Write([]byte(EncodeError))
 				} else {
 					conn.Write(data)
 				}
 			}
 		}
 
-		if strings.HasPrefix(msgStr, SET_CREDS_FLAG) {
+		if strings.HasPrefix(msgStr, SetCredsFlag) {
 			log.Println("Store credentials to memory for reuse.")
-			idx := len(SET_CREDS_FLAG) + len(DELIMITER)
+			idx := len(SetCredsFlag) + len(DELIMITER)
 			err := s.credentials.Decode([]byte(msgStr[idx:]))
 			if err != nil {
-				conn.Write([]byte(DECODE_ERROR))
+				conn.Write([]byte(DecodeError))
 			}
 		}
 	}
@@ -121,7 +121,7 @@ func (s *server) accept() {
 func (s *server) run() {
 	// skip when server is running
 	if _, err := os.Stat(s.SocketFile); !os.IsNotExist(err) {
-		log.Println("Server is running, just reuse it.")
+		log.Println("Server is already running, just reuse it.")
 		return
 	}
 

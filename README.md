@@ -18,7 +18,7 @@ A tool to automate AWS API access using a SAML compliant identity provider. This
 2. Merge `.awsudo` and `.awsudo_roles` configs to single one config by `TOML`, and add `awsudo configure` command to setup the config, just like `aws configure` style
 3. Merge `awsudo agent` and `awsudo` command, just use one command to do all tasks
 4. Add `AWS Role Session Duration` and `Awsudo Agent Expiration` support, more secure
-5. Add command `awsudo shutdown` to close agent server gracefully
+5. Add command `awsudo stop` to close agent server gracefully
 6. Add output log for monitor and debug
 7. Add docker support for development
 
@@ -41,6 +41,7 @@ make uninstall
 ## Usage
 
 ```bash
+awsudo help
 awsudo configure
 awsudo prod-env aws s3 ls
 ```
@@ -56,6 +57,7 @@ to run aws command.
 
 * `make test`, run unit test, coverage test, static analytics
 * `make run`, just to run help command to as a start point
+  * `export AWSUDO_DEBUG=true; make run CMD=stop`, to run `stop` command with debug mode
 * `make build`, cross compile binaries, and put into `dist/bin` directory
 * `make debug`, use `dlv` to do the `gdb-style` debug
 * `make dev`, build docker image used in dev
