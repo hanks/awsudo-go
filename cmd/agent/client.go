@@ -1,9 +1,10 @@
 package agent
 
 import (
-	"fmt"
+	"bufio"
 	"log"
 	"net"
+	"os"
 	"strings"
 	"time"
 
@@ -19,6 +20,10 @@ type client struct {
 	RoleName   string
 }
 
+func (c *client) buildReq(cmds []string) string {
+	return strings.Join(cmds[:], DELIMITER)
+}
+
 func (c *client) handleClientFunc(conn net.Conn) {
 	defer conn.Close()
 
@@ -26,7 +31,14 @@ func (c *client) handleClientFunc(conn net.Conn) {
 	// ask credentials existed or not
 	//    if existed, get them directly from server
 	//    if not existed, ask user account and pass to fetch credentials and then store into server
-	req := "GetCreds"
+
+	_, roleARN := c.Config.GetARN(c.RoleName)
+	if roleARN == "" {
+		log.Fatalf("Can not find role name: %v", c.RoleName)
+	}
+
+	// GetCred#roleARN
+	req := c.buildReq([]string{GetCredsFlag, roleARN})
 	_, err := conn.Write([]byte(req))
 	if err != nil {
 		log.Fatalf("Client error, can not send %s successfully, %v", req, err)
@@ -39,14 +51,16 @@ func (c *client) handleClientFunc(conn net.Conn) {
 	}
 
 	resp = resp[:length]
-	credentials := new(creds.Creds)
+	cred := new(creds.Creds)
 
 	if string(resp) == NoCredsFlag {
-		user, pass := utils.AskUserInput()
-		credentials = creds.FetchCreds(user, pass, c.RoleName, c.Config)
-		encoded, _ := credentials.Encode()
-		req = fmt.Sprintf("%s%s%s", SetCredsFlag, DELIMITER, encoded)
+		scanner := bufio.NewScanner(os.Stdin)
+		user, pass := utils.AskUserInput(scanner)
+		cred = creds.FetchCreds(user, pass, c.RoleName, c.Config)
+		encoded, _ := cred.Encode()
 
+		// SetCred#roleARN#value
+		req = c.buildReq([]string{SetCredsFlag, roleARN, string(encoded)})
 		_, err = conn.Write([]byte(req))
 		if err != nil {
 			log.Fatalf("Client error, can not send %s successfully, %v", req, err)
@@ -55,8 +69,8 @@ func (c *client) handleClientFunc(conn net.Conn) {
 		log.Fatalf("Server error, %s, %v", req, err)
 	}
 
-	credentials.Decode(resp)
-	credentials.SetEnv()
+	cred.Decode(resp)
+	cred.SetEnv()
 	log.Printf("Set credentials env var ok")
 }
 

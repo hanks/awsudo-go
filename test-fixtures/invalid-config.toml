@@ -1,0 +1,9 @@
+[provider]
+idp = "okta" idp_login_url = "idp_login_url"
+
+[agent]
+expiration = 3300
+
+[[roles]]
+name = "adhoc"
+arn = "adhoc"

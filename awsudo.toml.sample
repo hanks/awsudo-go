@@ -6,7 +6,7 @@ auth_api = "https://example.okta.com/api/v1/authn"
 session_duration = 3600
 
 [agent]
-expiration = 3600
+expiration = 3300
 
 [[roles]]
 name = "test"

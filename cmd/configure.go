@@ -16,7 +16,10 @@ func RunConfigure(path string) {
 	if path == "" {
 		path = c.DefaultConfPath
 	}
-	absPath := utils.GetAbsPath(path)
+	absPath, err := utils.GetAbsPath(path)
+	if err != nil {
+		log.Fatalf("Config (%s) load error: %v", absPath, err)
+	}
 
 	// create config directory if not existed
 	absDir := filepath.Dir(absPath)
@@ -33,6 +36,12 @@ func RunConfigure(path string) {
 		}
 	}
 
-	conf.InputConfig()
-	parser.WriteConfig(absPath, conf)
+	err = conf.InputConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = conf.WriteConfig(absPath)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

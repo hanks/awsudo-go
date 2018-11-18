@@ -1,0 +1,13 @@
+[provider]
+idp = "okta"
+idp_login_url = "idp_login_url"
+saml_provide_name = "saml_provide_name"
+auth_api = "auth_api"
+session_duration = 3600
+
+[agent]
+expiration = 3300
+
+[[roles]]
+name = "adhoc"
+arn = "adhoc"
