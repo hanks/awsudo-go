@@ -13,11 +13,11 @@ default: test
 
 build: test clean
 	docker run -it --rm -v $(CUR_DIR):$(WORKSPACE) -e "CGO_ENABLED=0" -e "GOARCH=amd64" -e "GOOS=linux" $(DEV_IMAGE) go build -o ./dist/bin/$(NAME)_linux_amd64_$(VERSION) main.go
-	zip ./dist/bin/$(NAME)_linux_amd64_$(VERSION).zip ./dist/bin/$(NAME)_linux_amd64_$(VERSION)
+	zip -j ./dist/bin/$(NAME)_linux_amd64_$(VERSION).zip ./dist/bin/$(NAME)_linux_amd64_$(VERSION)
 	rm ./dist/bin/$(NAME)_linux_amd64_$(VERSION)
 
 	docker run -it --rm -v $(CUR_DIR):$(WORKSPACE) -e "CGO_ENABLED=0" -e "GOARCH=amd64" -e "GOOS=darwin" $(DEV_IMAGE) go build -o ./dist/bin/$(NAME)_darwin_amd64_$(VERSION) main.go
-	zip ./dist/bin/$(NAME)_darwin_amd64_$(VERSION).zip ./dist/bin/$(NAME)_darwin_amd64_$(VERSION)
+	zip -j ./dist/bin/$(NAME)_darwin_amd64_$(VERSION).zip ./dist/bin/$(NAME)_darwin_amd64_$(VERSION)
 	rm ./dist/bin/$(NAME)_darwin_amd64_$(VERSION)
 
 clean:
@@ -30,7 +30,7 @@ debug:
 	docker run -it --rm --security-opt=seccomp:unconfined -e CGO_ENABLED=0 -v $(CUR_DIR):$(WORKSPACE) $(DEV_IMAGE) dlv debug main.go
 
 install:
-	unzip -o ./dist/bin/$(NAME)_$(OS)_amd64_$(VERSION).zip
+	unzip -o ./dist/bin/$(NAME)_$(OS)_amd64_$(VERSION).zip -d ./dist/bin/
 	cp ./dist/bin/$(NAME)_$(OS)_amd64_$(VERSION) /usr/local/bin/$(NAME)
 	rm ./dist/bin/$(NAME)_$(OS)_amd64_$(VERSION)
 
