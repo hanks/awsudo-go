@@ -22,7 +22,7 @@ type server struct {
 	stopChan chan bool
 	connChan chan net.Conn
 
-	credentials *creds.Creds
+	credentials map[string]*creds.Creds
 }
 
 func newServer(socket string, expire int64) *server {
@@ -32,10 +32,36 @@ func newServer(socket string, expire int64) *server {
 		sigChan:     make(chan os.Signal, 1),
 		stopChan:    make(chan bool, 1),
 		connChan:    make(chan net.Conn),
-		credentials: new(creds.Creds),
+		credentials: make(map[string]*creds.Creds),
 	}
 
 	return s
+}
+
+func (s *server) validate(msg string) bool {
+	if len(msg) == 0 {
+		return false
+	}
+
+	cmds := strings.Split(msg, DELIMITER)
+	if len(cmds) <= 1 {
+		return false
+	}
+
+	cmd := cmds[0]
+	if cmd != GetCredsFlag && cmd != SetCredsFlag {
+		return false
+	}
+	// [GetCred roleARN]
+	if cmd == GetCredsFlag && len(cmds) != 2 {
+		return false
+	}
+	// [SetCred roleARN cred]
+	if cmd == SetCredsFlag && len(cmds) != 3 {
+		return false
+	}
+
+	return true
 }
 
 func (s *server) handleServerFunc(conn net.Conn) {
@@ -57,28 +83,40 @@ func (s *server) handleServerFunc(conn net.Conn) {
 		buf = buf[:length]
 
 		msgStr := string(buf)
-		if msgStr == GetCredsFlag {
-			if s.credentials.AccessKeyID == "" {
-				log.Println("No stored credentials yet, please set it firstly.")
-				conn.Write([]byte(NoCredsFlag))
-			} else {
+		if !s.validate(msgStr) {
+			conn.Write([]byte(BadRequest))
+		}
+
+		cmds := strings.Split(msgStr, DELIMITER)
+		cmd := cmds[0]
+
+		if cmd == GetCredsFlag {
+			key := cmds[1]
+			_, exist := s.credentials[key]
+			if exist {
 				log.Println("Credential is already existed, send to client directly.")
-				data, err := s.credentials.Encode()
+				data, err := s.credentials[key].Encode()
 				if err != nil {
 					conn.Write([]byte(EncodeError))
 				} else {
 					conn.Write(data)
 				}
+			} else {
+				log.Println("No stored credentials yet, please set it firstly.")
+				conn.Write([]byte(NoCredsFlag))
 			}
 		}
 
-		if strings.HasPrefix(msgStr, SetCredsFlag) {
+		if cmd == SetCredsFlag {
 			log.Println("Store credentials to memory for reuse.")
-			idx := len(SetCredsFlag) + len(DELIMITER)
-			err := s.credentials.Decode([]byte(msgStr[idx:]))
+			key := cmds[1]
+			value := cmds[2]
+
+			cred, err := creds.NewCred([]byte(value))
 			if err != nil {
 				conn.Write([]byte(DecodeError))
 			}
+			s.credentials[key] = cred
 		}
 	}
 }

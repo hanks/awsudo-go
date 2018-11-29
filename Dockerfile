@@ -7,6 +7,7 @@ RUN apk --no-cache update && \
         pip --no-cache-dir install awscli && \
         go get -u github.com/derekparker/delve/cmd/dlv && \
         go get github.com/golang/lint/golint && \
+        go get github.com/mattn/goveralls && \
         mkdir -p ./dist/bin && \
         rm -rf /var/cache/apk/*
 

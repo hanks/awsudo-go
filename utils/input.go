@@ -1,32 +1,36 @@
 package utils
 
 import (
-	"bufio"
 	"fmt"
-	"log"
-	"os"
 	"strconv"
+	"strings"
 	"syscall"
 
 	"github.com/hanks/awsudo-go/configs"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+type iScanner interface {
+	Scan() bool
+	Text() string
+}
+
+var readPassword = terminal.ReadPassword
+
 // AskUserInput is to ask user to input account info for aws role
-func AskUserInput() (string, string) {
+func AskUserInput(scanner iScanner) (string, string) {
 	var name, pass string
 
 	fmt.Print("Please enter login name: ")
-	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	name = scanner.Text()
 
 	for {
 		fmt.Print("Please enter login password: ")
-		onePass, _ := terminal.ReadPassword(int(syscall.Stdin))
+		onePass, _ := readPassword(int(syscall.Stdin))
 
 		fmt.Print("\nPlease confirm login password: ")
-		twoPass, _ := terminal.ReadPassword(int(syscall.Stdin))
+		twoPass, _ := readPassword(int(syscall.Stdin))
 
 		if string(onePass) == string(twoPass) {
 			pass = string(onePass)
@@ -41,35 +45,47 @@ func AskUserInput() (string, string) {
 	return name, pass
 }
 
-var scanner = bufio.NewScanner(os.Stdin)
-
 // InputString is to accept user input to a string var
-func InputString(s *string, name string) {
-	v := *s
-	if v == "" {
-		v = "None"
+func InputString(scanner iScanner, original string, name string) string {
+	// for UX, to print out None when the value is empty
+	var input = original
+	if original == "" {
+		fmt.Printf("%s [%v]: ", name, "None")
+	} else {
+		fmt.Printf("%s [%v]: ", name, original)
 	}
-	fmt.Printf("%s [%v]: ", name, v)
+
 	scanner.Scan()
-	if scanner.Text() != "" {
-		*s = scanner.Text()
+	text := scanner.Text()
+	if text != "" {
+		input = text
 	}
+
+	return input
 }
 
 // InputInt64 is to accept user input to a int64 var
-func InputInt64(v *int64, name string) {
-	i := *v
-	if i == 0 {
-		i = configs.DefaultSessionDuration
-		*v = i
-	}
-	fmt.Printf("%s [%v]: ", name, i)
-	scanner.Scan()
-	if scanner.Text() != "" {
-		n, err := strconv.ParseInt(scanner.Text(), 10, 64)
-		if err != nil {
-			log.Fatalf("Please input an integer for %s.", name)
+func InputInt64(scanner iScanner, original int64, name string) (int64, error) {
+	// for UX, to print out default value when the value is empty
+	var input = original
+	if original == 0 {
+		if strings.Contains(name, "Duration") {
+			input = configs.DefaultSessionDuration
+		} else if strings.Contains(name, "Expiration") {
+			input = configs.DefaultAgentExpiration
 		}
-		*v = n
 	}
+	fmt.Printf("%s [%v]: ", name, input)
+
+	scanner.Scan()
+	text := scanner.Text()
+	if text != "" {
+		n, err := strconv.ParseInt(text, 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		input = n
+	}
+
+	return input, nil
 }

@@ -31,10 +31,17 @@ func (c *Creds) Encode() ([]byte, error) {
 	return data, err
 }
 
-// Decode is to restart creds from json bytes
+// Decode is to restore creds from json bytes
 func (c *Creds) Decode(data []byte) error {
 	err := json.Unmarshal(data, c)
 	return err
+}
+
+// NewCred is to create a new creds object from json bytes
+func NewCred(data []byte) (*Creds, error) {
+	c := &Creds{}
+	err := c.Decode(data)
+	return c, err
 }
 
 // SetEnv is to set aws tokens to environment variables, to be used by other aws commands
@@ -67,7 +74,7 @@ func FetchCreds(user string, pass string, roleName string, conf *parser.Config) 
 	}
 	sts, _ := aws.NewSTS()
 
-	creds, err := sts.GetCredentials(roleARN, pARN, samlAssertion, conf.Provider.SessionDuration)
+	creds, err := sts.GetAWSCredentials(roleARN, pARN, samlAssertion, conf.Provider.SessionDuration)
 	if err != nil {
 		log.Fatalf("GetCredentials Error: %v", err)
 	}

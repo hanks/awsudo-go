@@ -14,7 +14,10 @@ func getConfig(path string) *parser.Config {
 	if path == "" {
 		path = c.DefaultConfPath
 	}
-	absPath := utils.GetAbsPath(path)
+	absPath, err := utils.GetAbsPath(path)
+	if err != nil {
+		log.Fatalf("Config (%s) load error: %v", absPath, err)
+	}
 	conf, err := parser.LoadConfig(absPath)
 	if err != nil {
 		log.Fatalf("Config (%s) load error: %v", absPath, err)
@@ -32,13 +35,13 @@ func RunAgentServer(path string) {
 }
 
 // RunAgentClient is a wrapper to run awsudo agent client
-func RunAgentClient(path string, roleName string) {
+func RunAgentClient(configPath string, roleName string) {
 	// create subprocess to run agent server background
 	ex, err := os.Executable()
 	if err != nil {
 		log.Fatalf("Can not find current executable binary.")
 	}
-	serverCmd := exec.Command(ex, "start-agent", "-c", path)
+	serverCmd := exec.Command(ex, "start-agent", "-c", configPath)
 	err = serverCmd.Start()
 	if err != nil {
 		log.Fatalf("Start server process background err. Please check %v", err)
@@ -49,7 +52,7 @@ func RunAgentClient(path string, roleName string) {
 	}
 
 	// run agent client foreground
-	conf := getConfig(path)
+	conf := getConfig(configPath)
 	existed, _ := conf.GetARN(roleName)
 	if !existed {
 		log.Fatalf("Role (%s) is not support now, please try another one.", roleName)

@@ -3,7 +3,6 @@ package parser
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"regexp"
 
@@ -35,6 +34,8 @@ type Config struct {
 	Roles    []role   `toml:"roles"`
 }
 
+var newscanner = bufio.NewScanner
+
 // LoadConfig is to create Config instance by loading from config file
 func LoadConfig(path string) (*Config, error) {
 	var conf Config
@@ -43,36 +44,43 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, err
 	}
 
-	conf.Validate()
+	err = conf.validate()
+	if err != nil {
+		return nil, err
+	}
 
 	return &conf, nil
 }
 
 // WriteConfig is to write config struct data to config file
-func WriteConfig(path string, config *Config) {
+func (c *Config) WriteConfig(path string) error {
 	f, err := os.Create(path)
 	if err != nil {
-		log.Fatalf("Create config (%s) error, please check: %v", path, err)
+		return fmt.Errorf("Create config (%s) error, please check: %v", path, err)
 	}
 	defer f.Close()
 
 	w := bufio.NewWriter(f)
 	encoder := toml.NewEncoder(w)
 	encoder.Indent = ""
-	err = encoder.Encode(config)
+	err = encoder.Encode(c)
 	if err != nil {
-		log.Fatalf("Write config (%s) error, please check: %v", path, err)
+		return fmt.Errorf("Write config (%s) error, please check: %v", path, err)
 	}
+
+	return nil
 }
 
-// Validate is to do easy validation for config items
-func (c *Config) Validate() {
-	if c.Agent.Expiration > c.Provider.SessionDuration {
-		log.Fatalf("Agent expiration (%d) should be smaller than session duration (%d), please check config file",
+// validate is to do easy validation for config items
+func (c *Config) validate() error {
+	if c.Agent.Expiration >= c.Provider.SessionDuration {
+		return fmt.Errorf("Agent expiration (%d) should be smaller than session duration (%d), please check config file",
 			c.Agent.Expiration,
 			c.Provider.SessionDuration,
 		)
 	}
+
+	return nil
 }
 
 // GetARN is to get arn from role name
@@ -104,21 +112,26 @@ func (c *Config) GetPrincipalArn(arn string) string {
 }
 
 // InputConfig is to accept user intput to set each items for config
-func (c *Config) InputConfig() {
-	utils.InputString(&c.Provider.IDP, "IDP")
-	utils.InputString(&c.Provider.IdpLoginURL, "IDP Login URL")
-	utils.InputString(&c.Provider.SamlProviderName, "SAML Provider Name")
-	utils.InputString(&c.Provider.AuthAPI, "Auth API")
+func (c *Config) InputConfig() error {
+	scanner := newscanner(os.Stdin)
 
-	utils.InputInt64(&c.Provider.SessionDuration, "AWS Session Duration")
-	utils.InputInt64(&c.Agent.Expiration, "Agent Expiration")
+	c.Provider.IDP = utils.InputString(scanner, c.Provider.IDP, "IDP")
+	c.Provider.IdpLoginURL = utils.InputString(scanner, c.Provider.IdpLoginURL, "IDP Login URL")
+	c.Provider.SamlProviderName = utils.InputString(scanner, c.Provider.SamlProviderName, "SAML Provider Name")
+	c.Provider.AuthAPI = utils.InputString(scanner, c.Provider.AuthAPI, "Auth API")
 
-	c.Validate()
+	c.Provider.SessionDuration, _ = utils.InputInt64(scanner, c.Provider.SessionDuration, "AWS Session Duration")
+	c.Agent.Expiration, _ = utils.InputInt64(scanner, c.Agent.Expiration, "Agent Expiration")
+
+	err := c.validate()
+	if err != nil {
+		return err
+	}
 
 	// input existed roles
 	for i := range c.Roles {
-		utils.InputString(&c.Roles[i].Name, "AWS Role Name")
-		utils.InputString(&c.Roles[i].ARN, "AWS Role ARN")
+		c.Roles[i].Name = utils.InputString(scanner, c.Roles[i].Name, "AWS Role Name")
+		c.Roles[i].ARN = utils.InputString(scanner, c.Roles[i].ARN, "AWS Role ARN")
 	}
 
 	// input new roles, exits when both input are empty string
@@ -126,12 +139,12 @@ func (c *Config) InputConfig() {
 		exitCnt := 0
 		r := role{}
 
-		utils.InputString(&r.Name, "AWS Role Name")
+		r.Name = utils.InputString(scanner, r.Name, "AWS Role Name")
 		if r.Name == "" {
 			exitCnt++
 		}
 
-		utils.InputString(&r.ARN, "AWS Role ARN")
+		r.ARN = utils.InputString(scanner, r.ARN, "AWS Role ARN")
 		if r.ARN == "" {
 			exitCnt++
 		}
@@ -142,4 +155,6 @@ func (c *Config) InputConfig() {
 
 		c.Roles = append(c.Roles, r)
 	}
+
+	return nil
 }
