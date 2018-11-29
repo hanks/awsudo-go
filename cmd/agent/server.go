@@ -162,6 +162,7 @@ func (s *server) run() {
 		log.Println("Server is already running, just reuse it.")
 		return
 	}
+	log.Printf("Start agent server to handle new request, and will be expired after %d seconds", s.Expiration)
 
 	log.Printf("Listen to socket file: %s", s.SocketFile)
 	listener, err := net.Listen("unix", s.SocketFile)

@@ -29,7 +29,6 @@ func getConfig(path string) *parser.Config {
 // RunAgentServer is a wrapper to run awsudo agent server process in background
 func RunAgentServer(path string) {
 	conf := getConfig(path)
-	log.Printf("Start agent server to handle new request, and will be expired after %d seconds", conf.Agent.Expiration)
 	server := newServer(c.SocketFile, conf.Agent.Expiration)
 	server.run()
 }

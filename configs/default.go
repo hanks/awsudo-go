@@ -45,4 +45,6 @@ var AppName = "awsudo"
 var DefaultSessionDuration int64 = 3600
 
 // DefaultAgentExpiration is expiration duration of awsudo agent server
+// DefaultAgentExpiration should be smaller than DefaultSessionDuration, to avoid
+// to cache expired credentials
 var DefaultAgentExpiration int64 = 3300
