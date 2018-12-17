@@ -1,4 +1,4 @@
-VERSION = 1.0.0
+VERSION = 1.1.0
 CUR_DIR = $(shell pwd)
 NAME = awsudo
 WORKSPACE = /go/src/github.com/hanks/awsudo-go
