@@ -1,0 +1,17 @@
+# found how to mount volume between docker containers in shared gitlab runner below,
+# https://gitlab.com/gitlab-org/gitlab-ce/issues/41227
+services:
+  - docker:18.06-dind
+
+stages:
+  - test
+
+unittest:
+  stage: test
+  before_script:
+    - apk add make=4.2.1-r2
+    - export SHARED_PATH="$(dirname ${CI_PROJECT_DIR})/shared"
+    - mkdir -p "$SHARED_PATH"
+    - cp -pr . "$SHARED_PATH"
+  script:
+    - make test

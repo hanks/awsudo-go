@@ -49,10 +49,6 @@ awsudo prod-env aws s3 ls
 It will call assumeRole API to fetch the credentials, and set them as environment variables, then
 to run aws command.
 
-### Demo
-
-![demo.gif](./docs/images/demo.gif)
-
 ## Development
 
 * `make test`, run unit test, coverage test, static analytics
@@ -61,10 +57,6 @@ to run aws command.
 * `make build`, cross compile binaries, and put into `dist/bin` directory
 * `make debug`, use `dlv` to do the `gdb-style` debug
 * `make dev`, build docker image used in dev
-
-## Release
-
-TODO
 
 ## Contribution
 
