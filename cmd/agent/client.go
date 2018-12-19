@@ -3,9 +3,11 @@ package agent
 import (
 	"bufio"
 	"log"
+	"math/rand"
 	"net"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/hanks/awsudo-go/configs"
@@ -31,6 +33,7 @@ func (c *client) handleClientFunc(conn net.Conn) {
 	// ask credentials existed or not
 	//    if existed, get them directly from server
 	//    if not existed, ask user account and pass to fetch credentials and then store into server
+	//       here we will fetch credentials for all aws accounts at the first time for future usages.
 
 	_, roleARN := c.Config.GetARN(c.RoleName)
 	if roleARN == "" {
@@ -56,22 +59,50 @@ func (c *client) handleClientFunc(conn net.Conn) {
 	if string(resp) == NoCredsFlag {
 		scanner := bufio.NewScanner(os.Stdin)
 		user, pass := utils.AskUserInput(scanner)
-		cred = creds.FetchCreds(user, pass, c.RoleName, c.Config)
-		encoded, _ := cred.Encode()
 
-		// SetCred#roleARN#value
-		req = c.buildReq([]string{SetCredsFlag, roleARN, string(encoded)})
-		_, err = conn.Write([]byte(req))
-		if err != nil {
-			log.Fatalf("Client error, can not send %s successfully, %v", req, err)
-		}
+		c.fetchCredentialsByGroup(conn, cred, user, pass)
 	} else if strings.HasPrefix(string(resp), "Error") {
 		log.Fatalf("Server error, %s, %v", req, err)
+	} else {
+		// set credential to env var from cache
+		cred.Decode(resp)
+		cred.SetEnv()
 	}
 
-	cred.Decode(resp)
-	cred.SetEnv()
 	log.Printf("Set credentials env var ok")
+}
+
+func (c *client) fetchCredentialsByGroup(conn net.Conn, cred *creds.Creds, user string, pass string) {
+	var wg sync.WaitGroup
+
+	for _, role := range c.Config.Roles {
+		wg.Add(1)
+		go func(roleName string, roleARN string) {
+			defer wg.Done()
+
+			// to simulate random.range(min, max)
+			sleepUnit := rand.Intn(configs.MaxSleepUnit-configs.MinSleepUnit) + configs.MinSleepUnit
+			log.Printf("Role %s's random sleep unit for api request is %d", roleName, sleepUnit)
+			time.Sleep(time.Duration(sleepUnit) * time.Millisecond)
+
+			cred = creds.FetchCreds(user, pass, roleName, c.Config)
+			encoded, _ := cred.Encode()
+
+			// SetCred#roleARN#value
+			req := c.buildReq([]string{SetCredsFlag, roleARN, string(encoded)})
+			_, err := conn.Write([]byte(req))
+			if err != nil {
+				log.Fatalf("Client error, can not send %s successfully, %v", req, err)
+			}
+
+			if c.RoleName == roleName {
+				// set credential to env var from newly created cred instance if it is the user's request
+				cred.SetEnv()
+			}
+		}(role.Name, role.ARN)
+	}
+
+	wg.Wait()
 }
 
 func newClient(socket string, c *parser.Config, roleName string) *client {
@@ -86,6 +117,7 @@ func (c *client) run() {
 	var conn net.Conn
 	var err error
 
+	// wait for server running
 	for _, v := range configs.RetryInterval {
 		conn, err = net.Dial("unix", c.SocketFile)
 		if err == nil {

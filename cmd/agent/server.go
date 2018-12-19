@@ -108,7 +108,6 @@ func (s *server) handleServerFunc(conn net.Conn) {
 		}
 
 		if cmd == SetCredsFlag {
-			log.Println("Store credentials to memory for reuse.")
 			key := cmds[1]
 			value := cmds[2]
 
@@ -117,6 +116,7 @@ func (s *server) handleServerFunc(conn net.Conn) {
 				conn.Write([]byte(DecodeError))
 			}
 			s.credentials[key] = cred
+			log.Printf("Store credentials for %s to memory for reuse.\n", key)
 		}
 	}
 }

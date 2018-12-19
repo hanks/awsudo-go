@@ -37,6 +37,14 @@ var DefaultLogPath = "/tmp/awsudo.log"
 // AppName is the name of this app
 var AppName = "awsudo"
 
+// MaxSleepUnit is the max value of sleep unit (Millisecond),
+// will use random range [min, max] to make the requests not to be sent at the same time
+// to trigger the OKta API rate limit error
+var MaxSleepUnit = 6000
+
+// MinSleepUnit is the min value of sleep unit (Millisecond)
+var MinSleepUnit = 100
+
 /*
  * Config File Settings
  */
