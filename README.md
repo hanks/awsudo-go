@@ -62,6 +62,10 @@ to run aws command.
 * `make debug`, use `dlv` to do the `gdb-style` debug
 * `make dev`, build docker image used in dev
 
+## Release
+
+TODO
+
 ## Contribution
 
 **Waiting for your pull request**
