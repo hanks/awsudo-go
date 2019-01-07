@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -23,6 +24,7 @@ type server struct {
 	connChan chan net.Conn
 
 	credentials map[string]*creds.Creds
+	m           *sync.RWMutex
 }
 
 func newServer(socket string, expire int64) *server {
@@ -33,6 +35,7 @@ func newServer(socket string, expire int64) *server {
 		stopChan:    make(chan bool, 1),
 		connChan:    make(chan net.Conn),
 		credentials: make(map[string]*creds.Creds),
+		m:           new(sync.RWMutex),
 	}
 
 	return s
@@ -94,8 +97,11 @@ func (s *server) handleServerFunc(conn net.Conn) {
 			key := cmds[1]
 			_, exist := s.credentials[key]
 			if exist {
+				s.m.RLock()
 				log.Println("Credential is already existed, send to client directly.")
 				data, err := s.credentials[key].Encode()
+				s.m.RUnlock()
+
 				if err != nil {
 					conn.Write([]byte(EncodeError))
 				} else {
@@ -115,8 +121,11 @@ func (s *server) handleServerFunc(conn net.Conn) {
 			if err != nil {
 				conn.Write([]byte(DecodeError))
 			}
+
+			s.m.Lock()
 			s.credentials[key] = cred
 			log.Printf("Store credentials for %s to memory for reuse.\n", key)
+			s.m.Unlock()
 		}
 	}
 }
